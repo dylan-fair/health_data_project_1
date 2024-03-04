@@ -1,0 +1,39 @@
+Sub AddFirstDayOfMonth()
+
+    Dim ws As Worksheet
+
+    Dim rng As Range
+
+    Dim cell As Range
+
+ 
+
+    ' Set the worksheet to the active sheet. Change this if you need to specify a different sheet.
+
+    Set ws = ActiveSheet
+
+   
+
+    ' Define the range from the first row to the last non-empty cell in column J.
+
+    Set rng = ws.Range("J1:J" & ws.Cells(ws.Rows.Count, "J").End(xlUp).Row)
+
+ 
+
+    ' Loop through each cell in the range.
+
+    For Each cell In rng
+
+        ' Check if the cell is not empty and follows the yyyy-mm format (7 characters long).
+
+        If Len(cell.Value) = 7 And InStr(cell.Value, "-") > 0 Then
+
+            ' Append "-01" to the cell value.
+
+            cell.Value = cell.Value & "-01"
+
+        End If
+
+    Next cell
+
+End Sub
