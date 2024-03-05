@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import json
 
 breast_cancer = pd.read_csv('Breast cancer-ctg-studies.csv')
 covid = pd.read_csv('COVID-ctg-studies.csv')
@@ -15,14 +16,8 @@ for intervention in interventions:
             else:
                 covid_drugs[parced[-1]] = 1
 
-# Get the top 15 items in descending order
 top_15 = sorted(covid_drugs.items(), key=lambda x: x[1], reverse=True)[:15]
 
-# Print the top 15 items
-# for key, value in top_15:
-#     print(f'{key}: {value}')
-
-# Extract drug names and study counts
 drugs, counts = zip(*top_15)
 
 # Create a bar graph
@@ -30,7 +25,7 @@ plt.figure(figsize=(10, 6))
 plt.barh(drugs, counts, color='skyblue')
 plt.xlabel('Number of Studies')
 plt.title('Top 15 Drugs Studied Under COVID')
-plt.gca().invert_yaxis()  # Invert y-axis for better readability
+plt.gca().invert_yaxis()  
 plt.show()
 
 breast_cancer_drugs = {}
@@ -50,7 +45,6 @@ top_15 = sorted(breast_cancer_drugs.items(), key=lambda x: x[1], reverse=True)[:
 
 drugs, counts = zip(*top_15)
 
-# Create a bar graph
 plt.figure(figsize=(10, 6))
 plt.barh(drugs, counts, color='skyblue')
 plt.xlabel('Number of Studies')
@@ -73,13 +67,10 @@ covid_filtered.drop(columns=['Start Date_month'], inplace=True)
 breast_cancer['Start Date'] = pd.to_datetime(breast_cancer['Start Date'], format='%Y-%m-%d', errors='coerce')
 breast_cancer['Start Date_month'] = pd.to_datetime(breast_cancer['Start Date'], format='%Y-%m', errors='coerce')
 
-# Combine masks to filter trials for the desired date range in the 'breast_cancer' dataframe
 breast_cancer_filtered = breast_cancer[(breast_cancer['Start Date'] >= '2020-01-01') | (breast_cancer['Start Date_month'] >= '2020-01-01')]
 
-# Drop the temporary column used for 'yyyy-mm' format
 breast_cancer_filtered.drop(columns=['Start Date_month'], inplace=True)
 
-# Group by two-month periods and count the number of trials
 covid_timeline = covid_filtered.groupby(pd.Grouper(key='Start Date', freq='2M')).size()
 breast_cancer_timeline = breast_cancer_filtered.groupby(pd.Grouper(key='Start Date', freq='2M')).size()
 
@@ -91,4 +82,58 @@ plt.xlabel('Timeline (Two-Month Periods)')
 plt.ylabel('Number of Trials')
 plt.title('Clinical Trials Timeline Comparison')
 plt.legend()
+plt.show()
+
+
+# Read JSON file
+with open("covidEvents.json", "r") as file:
+    data = json.load(file)
+
+term_counts = {}
+for entry in data:
+    if "resultsSection" in entry:
+        adverse_events_module = entry.get("resultsSection", {}).get("adverseEventsModule", {})
+        if "seriousEvents" in adverse_events_module:
+            serious_events = adverse_events_module["seriousEvents"]
+            for event in serious_events:
+                term = event.get("term", "")
+                if term:
+                    term_counts[term] = term_counts.get(term, 0) + 1
+
+# Get top 10 terms
+top_terms = sorted(term_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+terms, counts = zip(*top_terms)
+
+# Create graph
+plt.bar(terms, counts)
+plt.xlabel('Terms')
+plt.ylabel('Occurrences')
+plt.title('Top 10 Adverse Events for Covid-19')
+plt.xticks(rotation=45, ha="right")
+plt.show()
+
+with open("breastCancerEvents.json", "r") as file:
+    data = json.load(file)
+
+term_counts = {}
+for entry in data:
+    if "resultsSection" in entry:
+        adverse_events_module = entry.get("resultsSection", {}).get("adverseEventsModule", {})
+        if "seriousEvents" in adverse_events_module:
+            serious_events = adverse_events_module["seriousEvents"]
+            for event in serious_events:
+                term = event.get("term", "")
+                if term:
+                    term_counts[term] = term_counts.get(term, 0) + 1
+
+top_terms = sorted(term_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+
+terms, counts = zip(*top_terms)
+
+# Create graph
+plt.bar(terms, counts)
+plt.xlabel('Terms')
+plt.ylabel('Occurrences')
+plt.title('Top 10 Adverse Events for Breast Cancer')
+plt.xticks(rotation=45, ha="right")
 plt.show()
